@@ -11,6 +11,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
 
+    // Sync version — used by EF Core CLI tooling (dotnet ef commands)
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseSeeding((context, _) =>
+        {
+            DataSeeder.Seed(context);
+        });
+
+        optionsBuilder.UseAsyncSeeding(async (context, _, ct) =>
+        {
+            await DataSeeder.SeedAsync(context, ct);
+        });
+    }
 
     // Fluent API configurations
 
@@ -49,7 +62,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(u => u.Role)
                   .IsRequired()
                   .HasMaxLength(20)
-                  .HasDefaultValue(AuthRole.Staff);
+                  .HasDefaultValue("Staff");
 
             entity.Property(u => u.CreatedAt)
                   .IsRequired()
